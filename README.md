@@ -136,7 +136,35 @@ The server exposes four tools:
 
 ### MCP Client Configuration
 
-Add to your MCP client configuration (e.g., Claude Desktop):
+#### Using uvx (Recommended)
+
+No need to clone! Use `uvx` to run directly from GitHub:
+
+**Claude Desktop Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "git-line-stage": {
+      "command": "uvx",
+      "args": [
+        "git-line-stage@git+https://github.com/uneco/mcp-git-line-stage.git",
+        "mcp"
+      ]
+    }
+  }
+}
+```
+
+**Claude CLI:**
+
+```bash
+claude mcp add git-line-stage uvx git-line-stage@git+https://github.com/uneco/mcp-git-line-stage.git mcp
+```
+
+#### Using local clone
+
+If you prefer to use a local clone:
 
 ```json
 {
