@@ -45,9 +45,9 @@ jobs:
       run: |
         # Create a test file and verify list command works
         echo "test content" > test_file.txt
-        uv run python git-line-stage.py list --paths test_file.txt
+        uv run git-line-stage list --paths test_file.txt
 
     - name: Test CLI mcp help
       run: |
         # Verify the MCP server can be imported
-        uv run python -c "from importlib.util import spec_from_file_location, module_from_spec; spec = spec_from_file_location('git_line_stage', 'git-line-stage.py'); module = module_from_spec(spec); spec.loader.exec_module(module); print('Import successful')"
+        uv run python -c "import git_line_stage; print('Import successful')"
