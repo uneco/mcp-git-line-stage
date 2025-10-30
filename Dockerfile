@@ -10,7 +10,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy application files
-COPY git-line-stage.py /app/
+COPY git_line_stage.py /app/
 COPY pyproject.toml /app/
 
 # Install uv
@@ -20,11 +20,11 @@ RUN pip install --no-cache-dir uv
 RUN uv pip install --system mcp
 
 # Make script executable
-RUN chmod +x /app/git-line-stage.py
+RUN chmod +x /app/git_line_stage.py
 
 # Set default working directory for git operations
 WORKDIR /workspace
 
 # Default command
-ENTRYPOINT ["python", "/app/git-line-stage.py"]
+ENTRYPOINT ["python", "/app/git_line_stage.py"]
 CMD ["--help"]

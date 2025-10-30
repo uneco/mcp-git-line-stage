@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for git-line-stage.py"""
+"""Tests for git_line_stage.py"""
 
 import os
 import subprocess
@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-# Import functions from git-line-stage.py using importlib
+# Import functions from git_line_stage.py using importlib
 import sys
 import importlib.util
 spec = importlib.util.spec_from_file_location("git_line_stage",
-                                               os.path.join(os.path.dirname(__file__), "git-line-stage.py"))
+                                               os.path.join(os.path.dirname(__file__), "git_line_stage.py"))
 git_line_stage = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(git_line_stage)
 
