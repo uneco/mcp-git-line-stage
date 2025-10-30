@@ -162,18 +162,24 @@ No need to clone! Use `uvx` to run directly from GitHub:
 claude mcp add git-line-stage uvx git-line-stage@git+https://github.com/uneco/mcp-git-line-stage.git mcp
 ```
 
-#### Using local clone
+#### Using Docker
 
-If you prefer to use a local clone:
+Alternatively, use the Docker image from GitHub Container Registry:
 
 ```json
 {
   "mcpServers": {
     "git-line-stage": {
-      "command": "uv",
+      "command": "docker",
       "args": [
         "run",
-        "/path/to/mcp-git-line-stage/git_line_stage.py",
+        "-i",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/workspace",
+        "-w",
+        "/workspace",
+        "ghcr.io/uneco/mcp-git-line-stage:latest",
         "mcp"
       ]
     }
