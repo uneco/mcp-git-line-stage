@@ -136,7 +136,7 @@ The server exposes four tools:
 
 ### MCP Client Configuration
 
-#### Using uvx (Recommended)
+#### Using uvx
 
 Use `uvx` to run directly from GitHub:
 
