@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# git-line-stage.py
+# git_line_stage.py
 # Git line-level staging via MCP
 # Usage:
-#   uv run git-line-stage.py list [--paths <path1> <path2> ...] [--page-token <token>] [--page-size-files N] [--unified N]
-#   uv run git-line-stage.py apply scripts/run-db-seeder.sh 0001,0004,0010-0015
-#   uv run git-line-stage.py mcp  # Run as MCP server
+#   uv run git_line_stage.py list [--paths <path1> <path2> ...] [--page-token <token>] [--page-size-files N] [--unified N]
+#   uv run git_line_stage.py apply scripts/run-db-seeder.sh 0001,0004,0010-0015
+#   uv run git_line_stage.py mcp  # Run as MCP server
 
 import argparse
 import base64

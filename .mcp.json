@@ -4,7 +4,7 @@
       "command": "uv",
       "args": [
         "run",
-        "git-line-stage.py",
+        "git_line_stage.py",
         "mcp"
       ]
     }

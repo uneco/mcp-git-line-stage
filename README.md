@@ -28,7 +28,7 @@ git clone https://github.com/uneco/mcp-git-line-stage.git
 cd mcp-git-line-stage
 
 # Run directly with uv
-uv run git-line-stage.py --help
+uv run git_line_stage.py --help
 ```
 
 ### Using Docker
@@ -50,29 +50,29 @@ docker run -v $(pwd):/workspace -w /workspace ghcr.io/uneco/mcp-git-line-stage:l
 View all unstaged changes (including untracked files) with line numbers:
 
 ```bash
-uv run git-line-stage.py list
+uv run git_line_stage.py list
 ```
 
 Filter by specific paths:
 
 ```bash
-uv run git-line-stage.py list --paths src/main.py tests/
+uv run git_line_stage.py list --paths src/main.py tests/
 ```
 
 Adjust context lines (default: 20):
 
 ```bash
-uv run git-line-stage.py list --unified 10
+uv run git_line_stage.py list --unified 10
 ```
 
 Pagination (byte-based for LLM context protection):
 
 ```bash
 # Get first page (default: 30KB max, 50 files max)
-uv run git-line-stage.py list --page-size-bytes 30720 --page-size-files 50
+uv run git_line_stage.py list --page-size-bytes 30720 --page-size-files 50
 
 # Use the returned page_token_next for subsequent pages
-uv run git-line-stage.py list --page-token <token>
+uv run git_line_stage.py list --page-token <token>
 ```
 
 Note: Large files (>10KB diff) are automatically truncated. When you see `"truncated": true` in the output, use the `diff` tool to view the complete numbered diff. The `git diff` command cannot be used for partial staging because it doesn't provide the line numbers needed by `apply_changes`.
@@ -83,7 +83,7 @@ Stage specific changes by their line numbers:
 
 ```bash
 # Stage changes 1, 4, and 10-15 from a file
-uv run git-line-stage.py apply src/main.py 0001,0004,0010-0015
+uv run git_line_stage.py apply src/main.py 0001,0004,0010-0015
 ```
 
 The output shows:
@@ -96,7 +96,7 @@ The output shows:
 Run as an MCP server for integration with MCP clients:
 
 ```bash
-uv run git-line-stage.py mcp
+uv run git_line_stage.py mcp
 ```
 
 #### MCP Tools
@@ -145,7 +145,7 @@ Add to your MCP client configuration (e.g., Claude Desktop):
       "command": "uv",
       "args": [
         "run",
-        "/path/to/mcp-git-line-stage/git-line-stage.py",
+        "/path/to/mcp-git-line-stage/git_line_stage.py",
         "mcp"
       ]
     }
@@ -250,10 +250,10 @@ uv sync
 uv run pytest
 
 # Format code
-uv run black git-line-stage.py
+uv run black git_line_stage.py
 
 # Type check
-uv run mypy git-line-stage.py
+uv run mypy git_line_stage.py
 ```
 
 ## Use Cases
