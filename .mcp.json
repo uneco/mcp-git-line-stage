@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "git-line-stage": {
+      "command": "uv",
+      "args": [
+        "run",
+        "git-line-stage.py",
+        "mcp"
+      ]
+    }
+  }
+}
