@@ -138,7 +138,7 @@ The server exposes four tools:
 
 #### Using uvx (Recommended)
 
-No need to clone! Use `uvx` to run directly from GitHub:
+Use `uvx` to run directly from GitHub:
 
 **Claude Desktop Configuration:**
 
