@@ -211,6 +211,34 @@ def get_diff_with_untracked(paths: list[str], unified: int) -> tuple[str, set, s
 
 # ---------- Display (flattened) ----------
 
+def calculate_line_stats(hunks: list[HunkRaw]) -> dict[str, int]:
+    """Calculate line statistics from hunks without generating full diff.
+
+    Args:
+        hunks: List of diff hunks for a file
+
+    Returns:
+        Dictionary with keys:
+        - additions: Number of lines added
+        - deletions: Number of lines deleted
+        - changes: Total number of changed lines (additions + deletions)
+    """
+    additions = 0
+    deletions = 0
+    for h in hunks:
+        for ln in h.all_lines:
+            if ln and len(ln) > 0:
+                sign = ln[0]
+                if sign == '+':
+                    additions += 1
+                elif sign == '-':
+                    deletions += 1
+    return {
+        "additions": additions,
+        "deletions": deletions,
+        "changes": additions + deletions
+    }
+
 def calculate_diff_size(hunks: list[HunkRaw]) -> int:
     """Calculate the total byte size of diff content in hunks.
 
@@ -754,17 +782,17 @@ def create_mcp_server():
 
         This tool helps you organize your changes and create multiple focused commits by:
         1. Showing recent commit messages as style reference
-        2. Displaying all unstaged changes (including untracked files) with line numbers
+        2. Displaying summary statistics of all unstaged changes (file counts, line counts)
         3. Providing step-by-step instructions for the commit workflow
 
-        Unlike `git status`, this includes the full content of untracked files, allowing you
-        to organize and split even newly created files across multiple commits.
+        This tool uses progressive disclosure: it shows only statistics (additions/deletions per file)
+        to avoid token limits. Use list_changes or diff tools to view detailed changes for specific files.
 
         Use this when you have multiple logical changes mixed together and want to organize them
         into separate, well-structured commits.
 
         Returns:
-            JSON with recent commits, all changes, and next steps for the agent
+            JSON with recent commits, file statistics, and next steps for the agent
         """
         # Get recent non-merge commits (last 5)
         try:
@@ -778,27 +806,76 @@ def create_mcp_server():
         except Exception as e:
             recent_commits = [f"Error getting commits: {str(e)}"]
 
-        # Get all unstaged changes (use large byte limit to get everything)
-        changes = list_files([], None, PAGE_SIZE_FILES_MAX, 10 * 1024 * 1024, UNIFIED_LIST_DEFAULT)  # 10MB limit
+        # Get all unstaged changes with statistics only (progressive disclosure)
+        diff_text, untracked_set, deleted_set = get_diff_with_untracked([], UNIFIED_LIST_DEFAULT)
+        files_hunks, binaries = parse_unified_diff(diff_text)
+
+        # Build file statistics without including full diff content
+        file_stats = []
+        total_additions = 0
+        total_deletions = 0
+
+        for path in sorted(files_hunks.keys()):
+            hunks = files_hunks[path]
+            binflag = binaries.get(path, False)
+
+            # Determine file status
+            if path in untracked_set:
+                status = "added"
+            elif path in deleted_set:
+                status = "deleted"
+            else:
+                status = "modified"
+
+            if binflag:
+                file_stats.append({
+                    "path": path,
+                    "binary": True,
+                    "status": status,
+                    "additions": 0,
+                    "deletions": 0,
+                    "changes": 0
+                })
+            else:
+                stats = calculate_line_stats(hunks)
+                file_stats.append({
+                    "path": path,
+                    "binary": False,
+                    "status": status,
+                    "additions": stats["additions"],
+                    "deletions": stats["deletions"],
+                    "changes": stats["changes"]
+                })
+                total_additions += stats["additions"]
+                total_deletions += stats["deletions"]
 
         # Create instruction for the agent
         instruction = {
             "recent_commits": recent_commits,
-            "changes": changes,
+            "summary": {
+                "total_files": len(file_stats),
+                "total_additions": total_additions,
+                "total_deletions": total_deletions,
+                "total_changes": total_additions + total_deletions
+            },
+            "files": file_stats,
             "next": (
                 "Now follow these steps to create focused commits:\n\n"
-                "1. **Analyze the changes**: Review all numbered changes above and identify logical groups "
-                "that should be committed together (e.g., related bug fixes, new features, refactoring).\n\n"
-                "2. **Plan commits**: Decide how many commits you need and what each should contain. "
+                "1. **Review file statistics**: Above you see all changed files with line counts "
+                "(additions/deletions). Use list_changes or diff tools to view detailed changes for specific files.\n\n"
+                "2. **Analyze the changes**: Identify logical groups that should be committed together "
+                "(e.g., related bug fixes, new features, refactoring).\n\n"
+                "3. **Plan commits**: Decide how many commits you need and what each should contain. "
                 "Use the recent commit messages above as a style reference.\n\n"
-                "3. **Use TodoWrite**: If you can manage todos, create a todo item for each planned commit "
+                "4. **Use TodoWrite**: If you can manage todos, create a todo item for each planned commit "
                 "with its intended commit message. Mark them as pending.\n\n"
-                "4. **Stage changes**: For each commit:\n"
+                "5. **Stage changes**: For each commit:\n"
                 "   - Mark the todo as in_progress\n"
-                "   - Use mcp__git-line-stage__apply_changes to stage the relevant line numbers\n"
+                "   - Use list_changes to view the numbered changes for relevant files\n"
+                "   - Use apply_changes to stage the relevant line numbers\n"
                 "   - Run `git commit -m \"your message\"` to create the commit\n"
                 "   - Mark the todo as completed\n\n"
-                "5. **Verify**: After all commits, run `git log` to verify and `git status` to ensure "
+                "6. **Verify**: After all commits, run `git log` to verify and `git status` to ensure "
                 "no changes were missed.\n\n"
                 "Remember: Create focused, atomic commits. Each commit should represent one logical change."
             )
