@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "mcp>=1.10.0",
+    "mcp>=1.21.1",
 ]
 
 [project.urls]
@@ -42,5 +42,5 @@ include = ["git_line_stage.py"]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.1",
 ]
