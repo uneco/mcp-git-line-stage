@@ -605,10 +605,10 @@ def parse_number_tokens(token_str: str) -> list[int]:
 def create_mcp_server():
     """Create and configure MCP server with FastMCP."""
     try:
-        from mcp.server.fastmcp import FastMCP
+        from fastmcp import FastMCP
         from mcp.types import ToolAnnotations
     except ImportError:
-        print("Error: mcp package not found. Install with: pip install mcp", file=sys.stderr)
+        print("Error: fastmcp package not found. Install with: pip install fastmcp", file=sys.stderr)
         sys.exit(1)
 
     mcp = FastMCP("git-line-stage")
