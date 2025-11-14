@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "git-line-stage": {
+    "git-line-stage-nightly": {
       "command": "uv",
       "args": [
         "run",
