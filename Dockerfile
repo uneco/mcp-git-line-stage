@@ -27,4 +27,3 @@ WORKDIR /workspace
 
 # Default command
 ENTRYPOINT ["python", "/app/git_line_stage.py"]
-CMD ["--help"]
