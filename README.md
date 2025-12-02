@@ -9,23 +9,21 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/uneco/mcp-git-polite)](https://github.com/uneco/mcp-git-polite/pulse)
 [![GitHub last commit](https://img.shields.io/github/last-commit/uneco/mcp-git-polite)](https://github.com/uneco/mcp-git-polite/commits/main)
 
-Git line-level staging via MCP - Stage individual changes from your diffs with surgical precision.
+Git staging on autopilot — let AI organize your changes into clean, focused commits.
 
 ## Overview
 
-`git-polite` is a Model Context Protocol (MCP) server that enables line-by-line staging of git changes. Instead of staging entire files or hunks, you can select specific additions and deletions by their line numbers, giving you fine-grained control over what goes into your commits.
+`git-polite` is a Model Context Protocol (MCP) server that brings intelligent git staging to AI agents. It can automatically organize messy work-in-progress into well-structured commits, or give you surgical precision with line-by-line staging when you need it.
 
 ## Features
 
-- **Line-Level Staging**: Stage individual additions and deletions by line number
+- **Autopilot Mode**: Let AI analyze your changes and create multiple focused commits automatically
+- **Line-Level Staging**: Stage individual additions and deletions by line number with surgical precision
 - **Untracked File Support**: Stage parts of newly created files (not just modified files)
 - **Range Selection**: Apply multiple changes at once using ranges (e.g., `0001-0005,0020-0025`)
-- **Byte-Based Pagination**: Protects LLM context with intelligent byte-based pagination (30KB default)
-- **Smart Truncation**: Large diffs (>10KB) are automatically truncated with option to view full diff
+- **LLM-Friendly Output**: Byte-based pagination and smart truncation protect context windows
 - **Binary File Detection**: Automatically detects and skips binary files
-- **Guided Commit Workflow**: Interactive tool to organize changes into focused commits
-- **MCP Integration**: Works seamlessly with MCP-compatible clients
-- **CLI and Server Modes**: Use as a standalone CLI tool or as an MCP server
+- **MCP Integration**: Works seamlessly with Claude Code, Claude Desktop, and other MCP clients
 
 ### MCP Server Mode
 
@@ -65,10 +63,10 @@ The server exposes four tools:
      - `path`: File path to apply changes to
      - `numbers`: Change numbers (format: `NNNN,MMMM,PPPP-QQQQ`)
 
-4. **begin_organize_and_commit_changes**: Start a guided session to organize all changes into focused commits
+4. **auto_commit**: Start autopilot mode to organize all changes into focused commits
    - Shows recent commit messages for style reference
-   - Displays all unstaged changes with line numbers
-   - Provides step-by-step instructions for creating atomic commits
+   - Analyzes all unstaged changes and suggests logical groupings
+   - Guides AI through creating multiple atomic commits from messy WIP
 
 ### MCP Client Configuration
 
@@ -228,12 +226,11 @@ uv run mypy git_polite.py
 
 ## Use Cases
 
+- **AI-Powered Commit Organization**: Let AI analyze your WIP and create clean commit history automatically
 - **Incremental Commits**: Break down large changes into logical, atomic commits
-- **Partial File Staging**: Stage only the first 10 lines of a new file while keeping the rest unstaged
+- **Partial File Staging**: Stage only specific lines of a new file while keeping the rest unstaged
 - **Code Review Preparation**: Stage related changes together, even if scattered across files
-- **Debugging**: Exclude debug statements while staging functional changes
-- **Refactoring**: Separate formatting changes from logic changes
-- **AI-Assisted Development**: Let AI agents stage changes with surgical precision and organize commits interactively
+- **Refactoring**: Separate formatting changes from logic changes with surgical precision
 
 ## Example Workflows
 
@@ -290,4 +287,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
-Built with [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for seamless AI integration.
+Built with [FastMCP](https://gofastmcp.com/) and the [Model Context Protocol](https://modelcontextprotocol.io/).
