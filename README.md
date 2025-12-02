@@ -1,4 +1,8 @@
-# mcp-git-polite
+<div align="center">
+ <img src="https://github.com/user-attachments/assets/1a84d7d4-7393-438b-92ef-55c3edac9461" width="1500" height="auto" alt="mcp-git-polite"/>
+</div>
+
+<hr />
 
 Git line-level staging via MCP - Stage individual changes from your diffs with surgical precision.
 
