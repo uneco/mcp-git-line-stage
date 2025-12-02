@@ -560,6 +560,142 @@ def apply_selected_changes_to_old(old_lines: list[str], hunks: list[HunkRaw], wa
 
     return new
 
+# ---------- ANSI Colors ----------
+
+ANSI_RED = "\033[31m"
+ANSI_GREEN = "\033[32m"
+ANSI_CYAN = "\033[36m"
+ANSI_RESET = "\033[0m"
+ANSI_BOLD = "\033[1m"
+
+def format_pretty(result: dict) -> str:
+    """Format list_files result as colored plain text.
+
+    Args:
+        result: Dictionary returned by list_files()
+
+    Returns:
+        Colored plain text string with:
+        - Green for added lines (+)
+        - Red for deleted lines (-)
+        - Cyan for file headers
+    """
+    lines: list[str] = []
+
+    for file_info in result.get("files", []):
+        path = file_info.get("path", "")
+        status = file_info.get("status", "modified")
+        binary = file_info.get("binary", False)
+        truncated = file_info.get("truncated", False)
+
+        # File header
+        status_label = f" ({status})" if status != "modified" else ""
+        lines.append(f"{ANSI_CYAN}{ANSI_BOLD}{path}{status_label}{ANSI_RESET}")
+
+        if binary:
+            lines.append("  (binary file)")
+            lines.append("")
+            continue
+
+        if truncated:
+            reason = file_info.get("reason", "diff too large")
+            lines.append(f"  (truncated: {reason})")
+            lines.append("")
+            continue
+
+        # Diff lines
+        for line in file_info.get("lines", []):
+            if line.startswith("        ..."):
+                lines.append(line)
+            elif len(line) >= 7 and line[4] == ':' and line[6] in '+-':
+                sign = line[6]
+                if sign == '+':
+                    lines.append(f"{ANSI_GREEN}{line}{ANSI_RESET}")
+                elif sign == '-':
+                    lines.append(f"{ANSI_RED}{line}{ANSI_RESET}")
+                else:
+                    lines.append(line)
+            else:
+                lines.append(line)
+
+        lines.append("")
+
+    # Stats
+    stats = result.get("stats", {})
+    files_count = stats.get("files", 0)
+    lines_count = stats.get("lines", 0)
+    truncated_count = stats.get("truncated_files", 0)
+    lines.append(f"--- {files_count} file(s), {lines_count} line(s)")
+    if truncated_count > 0:
+        lines.append(f"    ({truncated_count} file(s) truncated)")
+
+    # Pagination
+    if result.get("page_token_next"):
+        lines.append(f"    (more pages available)")
+
+    return "\n".join(lines)
+
+def format_apply_pretty(result: dict) -> str:
+    """Format apply_one_file result as colored plain text.
+
+    Args:
+        result: Dictionary returned by apply_one_file()
+
+    Returns:
+        Colored plain text string showing applied changes and remaining diff
+    """
+    lines: list[str] = []
+
+    # Error handling
+    if "error" in result:
+        lines.append(f"{ANSI_RED}Error: {result['error']}{ANSI_RESET}")
+        return "\n".join(lines)
+
+    # Applied files
+    for applied in result.get("applied", []):
+        file_path = applied.get("file", "")
+        count = applied.get("count", 0)
+        unstaged = applied.get("unstaged_lines", 0)
+
+        lines.append(f"{ANSI_GREEN}Applied {count} change(s) to {file_path}{ANSI_RESET}")
+        if unstaged > 0:
+            lines.append(f"  {unstaged} unstaged change(s) remaining")
+
+        # Show remaining diff
+        file_lines = applied.get("lines", [])
+        if file_lines:
+            lines.append("")
+            lines.append(f"{ANSI_CYAN}{ANSI_BOLD}Remaining changes in {file_path}:{ANSI_RESET}")
+            for line in file_lines:
+                if line.startswith("        ..."):
+                    lines.append(line)
+                elif len(line) >= 7 and line[4] == ':' and line[6] in '+-':
+                    sign = line[6]
+                    if sign == '+':
+                        lines.append(f"{ANSI_GREEN}{line}{ANSI_RESET}")
+                    elif sign == '-':
+                        lines.append(f"{ANSI_RED}{line}{ANSI_RESET}")
+                    else:
+                        lines.append(line)
+                else:
+                    lines.append(line)
+
+    # Skipped files
+    for skipped in result.get("skipped", []):
+        file_path = skipped.get("file", "")
+        number = skipped.get("number", "")
+        reason = skipped.get("reason", "unknown")
+        lines.append(f"{ANSI_RED}Skipped {file_path} #{number}: {reason}{ANSI_RESET}")
+
+    # Stats summary
+    stats = result.get("stats", {})
+    applied_count = stats.get("changes_applied", 0)
+    skipped_count = stats.get("changes_skipped", 0)
+    lines.append("")
+    lines.append(f"--- {applied_count} applied, {skipped_count} skipped")
+
+    return "\n".join(lines)
+
 # ---------- CLI ----------
 
 def parse_args():
@@ -572,10 +708,12 @@ def parse_args():
     list_parser.add_argument("--page-size-files", type=int, default=PAGE_SIZE_FILES_DEFAULT, help="Max files per page")
     list_parser.add_argument("--page-size-bytes", type=int, default=PAGE_SIZE_BYTES_DEFAULT, help="Max bytes per page")
     list_parser.add_argument("--unified", type=int, default=UNIFIED_LIST_DEFAULT, help="Context lines around hunks")
+    list_parser.add_argument("--format", choices=["json", "pretty"], default="json", help="Output format (default: json)")
 
     a = sub.add_parser("apply", help="Apply selected change numbers for a single file")
     a.add_argument("path", help="Target file path")
     a.add_argument("numbers", help="NNNN,MMMM,PPPP-QQQQ format change numbers to apply")
+    a.add_argument("--format", choices=["json", "pretty"], default="json", help="Output format (default: json)")
 
     sub.add_parser("mcp", help="Run as MCP server (stdio)")
 
@@ -896,19 +1034,28 @@ def main():
     args = parse_args()
     if args.cmd == "list":
         resp = list_files(args.paths, args.page_token, args.page_size_files, args.page_size_bytes, args.unified)
-        json.dump(resp, sys.stdout, ensure_ascii=False)
-        sys.stdout.write("\n")
+        if args.format == "pretty":
+            print(format_pretty(resp))
+        else:
+            json.dump(resp, sys.stdout, ensure_ascii=False)
+            sys.stdout.write("\n")
         return
 
     if args.cmd == "apply":
         try:
             numbers = parse_number_tokens(args.numbers)
         except ValueError as e:
-            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            if args.format == "pretty":
+                print(f"{ANSI_RED}Error: {e}{ANSI_RESET}", file=sys.stderr)
+            else:
+                print(json.dumps({"error": str(e)}), file=sys.stderr)
             sys.exit(2)
         resp = apply_one_file(args.path, numbers)
-        json.dump(resp, sys.stdout, ensure_ascii=False)
-        sys.stdout.write("\n")
+        if args.format == "pretty":
+            print(format_apply_pretty(resp))
+        else:
+            json.dump(resp, sys.stdout, ensure_ascii=False)
+            sys.stdout.write("\n")
         return
 
     if args.cmd == "mcp":
