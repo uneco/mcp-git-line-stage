@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# git_line_stage.py
+# git_polite.py
 # Git line-level staging via MCP
 # Usage:
-#   uv run git_line_stage.py list [--paths <path1> <path2> ...] [--page-token <token>] [--page-size-files N] [--unified N]
-#   uv run git_line_stage.py apply scripts/run-db-seeder.sh 0001,0004,0010-0015
-#   uv run git_line_stage.py mcp  # Run as MCP server
+#   uv run git_polite.py list [--paths <path1> <path2> ...] [--page-token <token>] [--page-size-files N] [--unified N]
+#   uv run git_polite.py apply scripts/run-db-seeder.sh 0001,0004,0010-0015
+#   uv run git_polite.py mcp  # Run as MCP server
 
 import argparse
 import base64
@@ -563,7 +563,7 @@ def apply_selected_changes_to_old(old_lines: list[str], hunks: list[HunkRaw], wa
 # ---------- CLI ----------
 
 def parse_args():
-    p = argparse.ArgumentParser(prog="git-line-stage", description="Git line-level staging")
+    p = argparse.ArgumentParser(prog="git-polite", description="Git line-level staging")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     list_parser = sub.add_parser("list", help="List file diffs as flat 'lines' with context")
@@ -611,7 +611,7 @@ def create_mcp_server():
         print("Error: fastmcp package not found. Install with: pip install fastmcp", file=sys.stderr)
         sys.exit(1)
 
-    mcp = FastMCP("git-line-stage")
+    mcp = FastMCP("git-polite")
 
     @mcp.tool(annotations=ToolAnnotations(
         readOnlyHint=True,
@@ -882,6 +882,13 @@ def create_mcp_server():
         }
 
         return json.dumps(instruction, ensure_ascii=False, indent=2)
+
+    @mcp.prompt(name="auto", description="Organize and commit changes using git-polite tools.")
+    def auto_commit() -> str:
+        """Organize and commit changes using git-polite tools."""
+        return (
+            "Call begin_organize_and_commit_changes and follow the instructions it returns."
+        )
 
     return mcp
 

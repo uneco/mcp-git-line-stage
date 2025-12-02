@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "git-line-stage-nightly": {
+    "git-polite-nightly": {
       "command": "uv",
       "args": [
         "run",
-        "git_line_stage.py",
+        "git_polite.py",
         "mcp"
       ]
     }

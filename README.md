@@ -1,10 +1,10 @@
-# mcp-git-line-stage
+# mcp-git-polite
 
 Git line-level staging via MCP - Stage individual changes from your diffs with surgical precision.
 
 ## Overview
 
-`git-line-stage` is a Model Context Protocol (MCP) server that enables line-by-line staging of git changes. Instead of staging entire files or hunks, you can select specific additions and deletions by their line numbers, giving you fine-grained control over what goes into your commits.
+`git-polite` is a Model Context Protocol (MCP) server that enables line-by-line staging of git changes. Instead of staging entire files or hunks, you can select specific additions and deletions by their line numbers, giving you fine-grained control over what goes into your commits.
 
 ## Features
 
@@ -23,7 +23,7 @@ Git line-level staging via MCP - Stage individual changes from your diffs with s
 Run as an MCP server for integration with MCP clients:
 
 ```bash
-uv run git_line_stage.py mcp
+uv run git_polite.py mcp
 ```
 
 #### MCP Tools
@@ -72,10 +72,10 @@ Use `uvx` to run directly from GitHub:
 ```json
 {
   "mcpServers": {
-    "git-line-stage": {
+    "git-polite": {
       "command": "uvx",
       "args": [
-        "git-line-stage@git+https://github.com/uneco/mcp-git-line-stage.git",
+        "git-polite@git+https://github.com/uneco/mcp-git-polite.git",
         "mcp"
       ]
     }
@@ -86,7 +86,7 @@ Use `uvx` to run directly from GitHub:
 **Claude CLI:**
 
 ```bash
-claude mcp add git-line-stage uvx git-line-stage@git+https://github.com/uneco/mcp-git-line-stage.git mcp
+claude mcp add git-polite uvx git-polite@git+https://github.com/uneco/mcp-git-polite.git mcp
 ```
 
 #### Using Docker
@@ -96,7 +96,7 @@ Alternatively, use the Docker image from GitHub Container Registry:
 ```json
 {
   "mcpServers": {
-    "git-line-stage": {
+    "git-polite": {
       "command": "docker",
       "args": [
         "run",
@@ -106,7 +106,7 @@ Alternatively, use the Docker image from GitHub Container Registry:
         "${workspaceFolder}:/workspace",
         "-w",
         "/workspace",
-        "ghcr.io/uneco/mcp-git-line-stage:latest",
+        "ghcr.io/uneco/mcp-git-polite:latest",
         "mcp"
       ]
     }
@@ -211,10 +211,10 @@ uv sync
 uv run pytest
 
 # Format code
-uv run black git_line_stage.py
+uv run black git_polite.py
 
 # Type check
-uv run mypy git_line_stage.py
+uv run mypy git_polite.py
 ```
 
 ## Use Cases

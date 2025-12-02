@@ -39,15 +39,15 @@ jobs:
 
     - name: Run tests
       run: |
-        uv run pytest test_git_line_stage.py -v
+        uv run pytest test_git_polite.py -v
 
     - name: Test CLI list command
       run: |
         # Create a test file and verify list command works
         echo "test content" > test_file.txt
-        uv run git-line-stage list --paths test_file.txt
+        uv run git-polite list --paths test_file.txt
 
     - name: Test CLI mcp help
       run: |
         # Verify the MCP server can be imported
-        uv run python -c "import git_line_stage; print('Import successful')"
+        uv run python -c "import git_polite; print('Import successful')"

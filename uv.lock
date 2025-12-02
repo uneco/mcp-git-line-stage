@@ -444,7 +444,7 @@ wheels = [
 ]
 
 [[package]]
-name = "git-line-stage"
+name = "git-polite"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

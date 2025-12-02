@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for git_line_stage.py"""
+"""Tests for git_polite.py"""
 
 import os
 import subprocess
@@ -8,25 +8,25 @@ from pathlib import Path
 
 import pytest
 
-# Import functions from git_line_stage.py using importlib
+# Import functions from git_polite.py using importlib
 import sys
 import importlib.util
-spec = importlib.util.spec_from_file_location("git_line_stage",
-                                               os.path.join(os.path.dirname(__file__), "git_line_stage.py"))
-git_line_stage = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(git_line_stage)
+spec = importlib.util.spec_from_file_location("git_polite",
+                                               os.path.join(os.path.dirname(__file__), "git_polite.py"))
+git_polite = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(git_polite)
 
-HUNK_RE = git_line_stage.HUNK_RE
-apply_one_file = git_line_stage.apply_one_file
-apply_selected_changes_to_old = git_line_stage.apply_selected_changes_to_old
-get_diff_with_untracked = git_line_stage.get_diff_with_untracked
-git_read_index_text = git_line_stage.git_read_index_text
-parse_unified_diff = git_line_stage.parse_unified_diff
-run = git_line_stage.run
-HunkRaw = git_line_stage.HunkRaw
-list_files = git_line_stage.list_files
-calculate_diff_size = git_line_stage.calculate_diff_size
-MAX_DIFF_BYTES = git_line_stage.MAX_DIFF_BYTES
+HUNK_RE = git_polite.HUNK_RE
+apply_one_file = git_polite.apply_one_file
+apply_selected_changes_to_old = git_polite.apply_selected_changes_to_old
+get_diff_with_untracked = git_polite.get_diff_with_untracked
+git_read_index_text = git_polite.git_read_index_text
+parse_unified_diff = git_polite.parse_unified_diff
+run = git_polite.run
+HunkRaw = git_polite.HunkRaw
+list_files = git_polite.list_files
+calculate_diff_size = git_polite.calculate_diff_size
+MAX_DIFF_BYTES = git_polite.MAX_DIFF_BYTES
 
 
 @pytest.fixture
@@ -456,20 +456,20 @@ class TestConstants:
 
     def test_constants_defined(self):
         """Test that page size constants are defined"""
-        assert hasattr(git_line_stage, "PAGE_SIZE_FILES_DEFAULT")
-        assert hasattr(git_line_stage, "PAGE_SIZE_FILES_MAX")
-        assert git_line_stage.PAGE_SIZE_FILES_DEFAULT == 50
-        assert git_line_stage.PAGE_SIZE_FILES_MAX == 1000
+        assert hasattr(git_polite, "PAGE_SIZE_FILES_DEFAULT")
+        assert hasattr(git_polite, "PAGE_SIZE_FILES_MAX")
+        assert git_polite.PAGE_SIZE_FILES_DEFAULT == 50
+        assert git_polite.PAGE_SIZE_FILES_MAX == 1000
 
     def test_max_diff_bytes_defined(self):
         """Test that MAX_DIFF_BYTES constant is defined"""
-        assert hasattr(git_line_stage, "MAX_DIFF_BYTES")
+        assert hasattr(git_polite, "MAX_DIFF_BYTES")
         assert MAX_DIFF_BYTES == 10 * 1024  # 10KB
 
     def test_page_size_bytes_defined(self):
         """Test that PAGE_SIZE_BYTES_DEFAULT constant is defined"""
-        assert hasattr(git_line_stage, "PAGE_SIZE_BYTES_DEFAULT")
-        assert git_line_stage.PAGE_SIZE_BYTES_DEFAULT == 30 * 1024  # 30KB
+        assert hasattr(git_polite, "PAGE_SIZE_BYTES_DEFAULT")
+        assert git_polite.PAGE_SIZE_BYTES_DEFAULT == 30 * 1024  # 30KB
 
 
 class TestLargeDiffTruncation:
@@ -681,7 +681,7 @@ class TestDiff:
         # Should have changes
         assert "small.txt" in files_hunks
         hunks = files_hunks["small.txt"]
-        lines = git_line_stage.flat_file_lines_with_numbers(hunks)
+        lines = git_polite.flat_file_lines_with_numbers(hunks)
 
         # Verify lines are generated
         assert len(lines) > 0
@@ -710,7 +710,7 @@ class TestDiff:
         assert diff_size > MAX_DIFF_BYTES
 
         # But lines should still be generated (no truncation)
-        lines = git_line_stage.flat_file_lines_with_numbers(hunks)
+        lines = git_polite.flat_file_lines_with_numbers(hunks)
         assert len(lines) > 0
 
         # Verify actual content is present
@@ -761,7 +761,7 @@ class TestDiff:
         # Should have diff showing deletion
         if "to_delete.txt" in files_hunks:
             hunks = files_hunks["to_delete.txt"]
-            lines = git_line_stage.flat_file_lines_with_numbers(hunks)
+            lines = git_polite.flat_file_lines_with_numbers(hunks)
             # Should have deletion markers
             assert any("-" in line for line in lines)
 

@@ -1,5 +1,5 @@
 [project]
-name = "git-line-stage"
+name = "git-polite"
 version = "0.1.0"
 description = "Git line-level staging via MCP - Stage individual changes and partial untracked files with precision"
 readme = "README.md"
@@ -26,12 +26,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/uneco/mcp-git-line-stage"
-Repository = "https://github.com/uneco/mcp-git-line-stage"
-Issues = "https://github.com/uneco/mcp-git-line-stage/issues"
+Homepage = "https://github.com/uneco/mcp-git-polite"
+Repository = "https://github.com/uneco/mcp-git-polite"
+Issues = "https://github.com/uneco/mcp-git-polite/issues"
 
 [project.scripts]
-git-line-stage = "git_line_stage:main"
+git-polite = "git_polite:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -39,7 +39,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
-include = ["git_line_stage.py"]
+include = ["git_polite.py"]
 
 [dependency-groups]
 dev = [
