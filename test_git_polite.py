@@ -3,16 +3,14 @@
 
 import os
 import subprocess
-import tempfile
-from pathlib import Path
 
 import pytest
 
 # Import functions from git_polite.py using importlib
-import sys
 import importlib.util
 spec = importlib.util.spec_from_file_location("git_polite",
                                                os.path.join(os.path.dirname(__file__), "git_polite.py"))
+assert spec is not None and spec.loader is not None, "Failed to load git_polite module"
 git_polite = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(git_polite)
 
