@@ -777,7 +777,7 @@ def create_mcp_server():
         readOnlyHint=True,
         openWorldHint=True
     ))
-    def begin_organize_and_commit_changes() -> str:
+    def auto_commit() -> str:
         """Start a guided session to organize and commit all unstaged changes with appropriate granularity.
 
         This tool helps you organize your changes and create multiple focused commits by:
@@ -884,10 +884,10 @@ def create_mcp_server():
         return json.dumps(instruction, ensure_ascii=False, indent=2)
 
     @mcp.prompt(name="auto", description="Organize and commit changes using git-polite tools.")
-    def auto_commit() -> str:
+    def auto_commit_command() -> str:
         """Organize and commit changes using git-polite tools."""
         return (
-            "Call begin_organize_and_commit_changes and follow the instructions it returns."
+            "Call auto_commit and follow the instructions it returns."
         )
 
     return mcp
