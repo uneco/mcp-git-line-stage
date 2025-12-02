@@ -4,6 +4,11 @@
 
 <hr />
 
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/uneco/mcp-git-polite/test.yml?branch=main)](https://github.com/uneco/mcp-git-polite/actions)
+[![GitHub](https://img.shields.io/github/license/uneco/mcp-git-polite)](https://github.com/uneco/mcp-git-polite/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/uneco/mcp-git-polite)](https://github.com/uneco/mcp-git-polite/pulse)
+[![GitHub last commit](https://img.shields.io/github/last-commit/uneco/mcp-git-polite)](https://github.com/uneco/mcp-git-polite/commits/main)
+
 Git line-level staging via MCP - Stage individual changes from your diffs with surgical precision.
 
 ## Overview
