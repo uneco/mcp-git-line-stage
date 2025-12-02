@@ -86,7 +86,7 @@ Use `uvx` to run directly from GitHub:
 **Claude CLI:**
 
 ```bash
-claude mcp add git-polite uvx git-polite@git+https://github.com/uneco/mcp-git-polite.git mcp
+claude mcp add -s user git-polite uvx git-polite@git+https://github.com/uneco/mcp-git-polite.git mcp
 ```
 
 #### Using Docker
