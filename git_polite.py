@@ -631,7 +631,7 @@ def format_pretty(result: dict) -> str:
 
     # Pagination
     if result.get("page_token_next"):
-        lines.append(f"    (more pages available)")
+        lines.append("    (more pages available)")
 
     return "\n".join(lines)
 
@@ -1021,7 +1021,7 @@ def create_mcp_server():
 
         return json.dumps(instruction, ensure_ascii=False, indent=2)
 
-    @mcp.prompt(name="auto", description="Organize and commit changes using git-polite tools.")
+    @mcp.prompt(name="auto-commit", description="Organize and commit changes using git-polite tools.")
     def auto_commit_command() -> str:
         """Organize and commit changes using git-polite tools."""
         return (
