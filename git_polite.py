@@ -464,18 +464,13 @@ def apply_one_file(path: str, want_numbers: list[int]) -> dict:
     update_index_with_content(path, mode, new_text)
 
     file_info = current_file_lines(path)
-    # Count remaining unstaged changes (lines that start with 4-digit number)
     unstaged_count = sum(1 for line in file_info["lines"] if line and len(line) >= 4 and line[:4].isdigit())
     return {
         "applied": [{
             "file": path,
-            "applied_count": len(want_set),  # Number of diff changes (additions/deletions) applied in this operation
-            "remaining_count": unstaged_count,  # Number of diff changes still unstaged after this operation
-            "remaining_diff": file_info["lines"],  # The diff lines that remain unstaged after this apply operation
-            # Legacy fields for backward compatibility
-            "count": len(want_set),
-            "lines": file_info["lines"],
-            "unstaged_lines": unstaged_count
+            "applied_count": len(want_set),
+            "remaining_count": unstaged_count,
+            "remaining_diff": file_info["lines"]
         }],
         "skipped": [],
         "stats": {"files": 1, "changes_applied": len(want_set), "changes_skipped": 0}
@@ -663,16 +658,15 @@ def format_apply_pretty(result: dict) -> str:
     # Applied files
     for applied in result.get("applied", []):
         file_path = applied.get("file", "")
-        # Use new field names, fallback to old for backward compatibility
-        count = applied.get("applied_count", applied.get("count", 0))
-        remaining = applied.get("remaining_count", applied.get("unstaged_lines", 0))
+        count = applied.get("applied_count", 0)
+        remaining = applied.get("remaining_count", 0)
 
         lines.append(f"{ANSI_GREEN}Applied {count} change(s) to {file_path}{ANSI_RESET}")
         if remaining > 0:
             lines.append(f"  {remaining} unstaged change(s) remaining")
 
         # Show remaining diff
-        file_lines = applied.get("remaining_diff", applied.get("lines", []))
+        file_lines = applied.get("remaining_diff", [])
         if file_lines:
             lines.append("")
             lines.append(f"{ANSI_CYAN}{ANSI_BOLD}Remaining changes in {file_path}:{ANSI_RESET}")
@@ -913,23 +907,17 @@ def create_mcp_server():
         Returns:
             JSON string with format:
             {
-              applied: [{
-                file: string,
-                applied_count: number,      # Number of diff changes (additions/deletions) applied
-                remaining_count: number,    # Number of diff changes still unstaged
-                remaining_diff: string[],   # The diff that remains unstaged (NOT what was applied)
-                # Legacy fields (same data, kept for compatibility):
-                count: number,              # Same as applied_count
-                unstaged_lines: number,     # Same as remaining_count
-                lines: string[]             # Same as remaining_diff
+              "applied": [{
+                "file": string,
+                "applied_count": number,
+                "remaining_count": number,
+                "remaining_diff": string[]
               }],
-              skipped: [...],
-              stats: {changes_applied, changes_skipped, files}
+              "skipped": [...],
+              "stats": {"changes_applied": number, "changes_skipped": number, "files": number}
             }
 
-            IMPORTANT: The 'remaining_diff' field shows the diff that is STILL UNSTAGED after
-            this apply operation, NOT the changes that were applied. After applying changes,
-            you can use this to see what other changes remain in the file.
+            Note: remaining_diff shows what is still unstaged after this operation.
         """
         try:
             nums = parse_number_tokens(numbers)

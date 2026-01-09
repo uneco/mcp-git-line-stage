@@ -190,10 +190,7 @@ When a file shows `truncated: true`, use the `diff` tool to view its complete co
       "file": "src/main.py",
       "applied_count": 3,
       "remaining_count": 5,
-      "remaining_diff": ["0001: + remaining", "0002: - unstaged", "0003: + changes"],
-      "count": 3,
-      "lines": ["0001: + remaining", "0002: - unstaged", "0003: + changes"],
-      "unstaged_lines": 5
+      "remaining_diff": ["0001: + remaining", "0002: - unstaged", "0003: + changes"]
     }
   ],
   "skipped": [],
@@ -205,7 +202,7 @@ When a file shows `truncated: true`, use the `diff` tool to view its complete co
 }
 ```
 
-**Note**: The response includes both new clear field names (`applied_count`, `remaining_count`, `remaining_diff`) and legacy fields (`count`, `lines`, `unstaged_lines`) for backward compatibility. The `remaining_diff` field shows the diff that is **still unstaged** after this apply operation, NOT the changes that were applied.
+**Note**: The `remaining_diff` field shows the diff that is still unstaged after this apply operation.
 
 ## Requirements
 
