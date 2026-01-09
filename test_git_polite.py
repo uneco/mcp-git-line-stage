@@ -336,6 +336,76 @@ class TestApplySelectedChanges:
         assert result == old_lines
 
 
+class TestApplyResponseFields:
+    """Test apply_one_file response format includes clear field names"""
+
+    def test_apply_response_has_clear_fields(self, git_repo):
+        """Test that apply response includes clear field names for LLM understanding"""
+        # Create and commit a file
+        test_file = git_repo / "test.txt"
+        test_file.write_text("line 1\nline 2\nline 3\nline 4\n")
+        subprocess.run(["git", "add", "test.txt"], cwd=git_repo, check=True)
+        subprocess.run(["git", "commit", "-m", "Initial"], cwd=git_repo, check=True)
+
+        # Make multiple changes
+        test_file.write_text("line 1\nnew line 2\nline 3\nnew line 4\nnew line 5\n")
+
+        # Apply only first 2 changes
+        result = apply_one_file("test.txt", [1, 2])
+
+        # Should have applied section
+        assert "applied" in result
+        assert len(result["applied"]) == 1
+        applied = result["applied"][0]
+
+        # Check new clear field names exist
+        assert "applied_count" in applied
+        assert "remaining_count" in applied
+        assert "remaining_diff" in applied
+
+        # Verify values
+        assert applied["applied_count"] == 2  # Applied 2 changes
+        assert applied["remaining_count"] >= 1  # At least 1 change remaining
+        assert isinstance(applied["remaining_diff"], list)  # Remaining diff is a list
+
+        # Check legacy fields still exist (backward compatibility)
+        assert "count" in applied
+        assert "unstaged_lines" in applied
+        assert "lines" in applied
+
+        # Verify legacy fields match new fields
+        assert applied["count"] == applied["applied_count"]
+        assert applied["unstaged_lines"] == applied["remaining_count"]
+        assert applied["lines"] == applied["remaining_diff"]
+
+    def test_apply_response_remaining_diff_is_not_applied_diff(self, git_repo):
+        """Test that remaining_diff shows what's left, not what was applied"""
+        # Create and commit a file
+        test_file = git_repo / "test.txt"
+        test_file.write_text("original 1\noriginal 2\noriginal 3\n")
+        subprocess.run(["git", "add", "test.txt"], cwd=git_repo, check=True)
+        subprocess.run(["git", "commit", "-m", "Initial"], cwd=git_repo, check=True)
+
+        # Make changes to all lines (git sees this as 3 deletions + 3 additions = 6 changes)
+        test_file.write_text("modified 1\nmodified 2\nmodified 3\n")
+
+        # Apply only the first change (one deletion)
+        result = apply_one_file("test.txt", [1])
+
+        applied = result["applied"][0]
+        
+        # remaining_diff should NOT contain the first change we applied
+        # It should contain the remaining unstaged changes
+        remaining_diff_str = "\n".join(applied["remaining_diff"])
+        
+        # The remaining changes should still be there
+        assert "original 2" in remaining_diff_str or "modified 2" in remaining_diff_str
+        
+        # Verify values are correct
+        assert applied["applied_count"] == 1  # Applied 1 change
+        assert applied["remaining_count"] == 5  # 5 changes remaining (2 more deletions + 3 additions)
+
+
 class TestDeletedFiles:
     """Test deleted file status detection"""
 
