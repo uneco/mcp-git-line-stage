@@ -738,6 +738,194 @@ def parse_number_tokens(token_str: str) -> list[int]:
         raise ValueError(f"invalid token: {t}")
     return nums
 
+# ---------- unstack implementation ----------
+
+def do_unstack(branches: dict[str, list[str]], parent: str = "origin/main") -> dict:
+    """Unstack linear commits into parallel branches.
+
+    Implementation of the unstack functionality that can be tested independently.
+
+    Args:
+        branches: Dictionary mapping branch names to lists of commit references
+        parent: Base commit to branch from (default: "origin/main")
+
+    Returns:
+        Dictionary with created_branches, errors, and stats
+    """
+    created_branches = []
+    errors = []
+
+    # Resolve parent commit SHA
+    try:
+        parent_sha = run(["git", "rev-parse", parent]).strip()
+    except subprocess.CalledProcessError as e:
+        return {
+            "created_branches": [],
+            "errors": [{
+                "branch": None,
+                "commit": parent,
+                "error": f"Failed to resolve parent '{parent}': {e.stderr if e.stderr else str(e)}"
+            }],
+            "stats": {
+                "total_branches": len(branches),
+                "successful_branches": 0,
+                "failed_branches": len(branches)
+            }
+        }
+
+    for branch_name, commits in branches.items():
+        try:
+            # Check if branch already exists
+            branch_check = run(["git", "rev-parse", "--verify", f"refs/heads/{branch_name}"], check=False)
+            if branch_check.strip():
+                errors.append({
+                    "branch": branch_name,
+                    "commit": None,
+                    "error": f"Branch '{branch_name}' already exists"
+                })
+                continue
+
+            # Start from parent commit
+            current_parent = parent_sha
+            commits_applied = []
+
+            for commit_ref in commits:
+                try:
+                    # Resolve commit ref to SHA
+                    commit_sha = run(["git", "rev-parse", commit_ref]).strip()
+
+                    # Get the parent of the commit we're cherry-picking
+                    original_parent = run(["git", "rev-parse", f"{commit_sha}^"]).strip()
+
+                    # Try to use modern merge-tree with --write-tree (Git 2.38+)
+                    # Syntax: git merge-tree --write-tree --merge-base=<base> <branch1> <branch2>
+                    merge_tree_result = run(
+                        ["git", "merge-tree", "--write-tree", f"--merge-base={original_parent}", current_parent, commit_sha],
+                        check=False
+                    )
+
+                    # If merge-tree --write-tree is not available (old Git), fall back
+                    # Note: errors go to stderr, so we check the result
+                    if not merge_tree_result.strip() or "unknown option" in merge_tree_result.lower():
+                        # Fallback: use old merge-tree
+                        merge_result = run(
+                            ["git", "merge-tree", original_parent, current_parent, commit_sha],
+                            check=False
+                        )
+                        if "<<<<<" in merge_result or "=====" in merge_result or ">>>>>" in merge_result:
+                            errors.append({
+                                "branch": branch_name,
+                                "commit": commit_ref,
+                                "error": "Merge conflict detected (Git version does not support --write-tree)"
+                            })
+                            break
+                        tree_sha = run(["git", "rev-parse", f"{commit_sha}^{{tree}}"]).strip()
+                    else:
+                        lines = merge_tree_result.strip().split("\n")
+                        if not lines:
+                            errors.append({
+                                "branch": branch_name,
+                                "commit": commit_ref,
+                                "error": "Empty merge-tree result"
+                            })
+                            break
+
+                        # First line should be tree SHA
+                        potential_tree = lines[0].strip()
+
+                        # Check if there are conflict markers in the output
+                        # merge-tree outputs "CONFLICT" messages after the tree SHA
+                        has_conflict = any("CONFLICT" in line for line in lines[1:])
+
+                        if has_conflict:
+                            errors.append({
+                                "branch": branch_name,
+                                "commit": commit_ref,
+                                "error": "Merge conflict detected during cherry-pick"
+                            })
+                            break
+                        elif len(potential_tree) == 40 and all(c in "0123456789abcdef" for c in potential_tree):
+                            tree_sha = potential_tree
+                        else:
+                            errors.append({
+                                "branch": branch_name,
+                                "commit": commit_ref,
+                                "error": f"Unexpected merge-tree output: {potential_tree}"
+                            })
+                            break
+
+                    # Get the original commit message and author
+                    commit_message = run(["git", "log", "--format=%B", "-n", "1", commit_sha]).strip()
+                    author_name = run(["git", "log", "--format=%an", "-n", "1", commit_sha]).strip()
+                    author_email = run(["git", "log", "--format=%ae", "-n", "1", commit_sha]).strip()
+                    author_date = run(["git", "log", "--format=%aI", "-n", "1", commit_sha]).strip()
+
+                    # Create new commit with the tree
+                    env = os.environ.copy()
+                    env["GIT_AUTHOR_NAME"] = author_name
+                    env["GIT_AUTHOR_EMAIL"] = author_email
+                    env["GIT_AUTHOR_DATE"] = author_date
+                    env.setdefault("LC_ALL", "C")
+                    env.setdefault("LANG", "C")
+
+                    p = subprocess.run(
+                        ["git", "commit-tree", tree_sha, "-p", current_parent, "-m", commit_message],
+                        capture_output=True,
+                        text=True,
+                        env=env
+                    )
+                    if p.returncode != 0:
+                        raise subprocess.CalledProcessError(p.returncode, p.args, p.stdout, p.stderr)
+                    new_commit_sha = p.stdout.strip()
+
+                    commits_applied.append({
+                        "ref": commit_ref,
+                        "original_sha": commit_sha,
+                        "new_sha": new_commit_sha
+                    })
+
+                    current_parent = new_commit_sha
+
+                except subprocess.CalledProcessError as e:
+                    errors.append({
+                        "branch": branch_name,
+                        "commit": commit_ref,
+                        "error": f"Failed to apply commit: {e.stderr if e.stderr else str(e)}"
+                    })
+                    break
+            else:
+                # All commits applied successfully, create the branch
+                try:
+                    run(["git", "update-ref", f"refs/heads/{branch_name}", current_parent])
+                    created_branches.append({
+                        "name": branch_name,
+                        "commits_applied": commits_applied,
+                        "head_sha": current_parent
+                    })
+                except subprocess.CalledProcessError as e:
+                    errors.append({
+                        "branch": branch_name,
+                        "commit": None,
+                        "error": f"Failed to create branch ref: {e.stderr if e.stderr else str(e)}"
+                    })
+
+        except subprocess.CalledProcessError as e:
+            errors.append({
+                "branch": branch_name,
+                "commit": None,
+                "error": f"Failed to process branch: {e.stderr if e.stderr else str(e)}"
+            })
+
+    return {
+        "created_branches": created_branches,
+        "errors": errors,
+        "stats": {
+            "total_branches": len(branches),
+            "successful_branches": len(created_branches),
+            "failed_branches": len(errors)
+        }
+    }
+
 # ---------- MCP Server ----------
 
 def create_mcp_server():
@@ -1027,6 +1215,54 @@ def create_mcp_server():
         return (
             "Call auto_commit and follow the instructions it returns."
         )
+
+    @mcp.tool(annotations=ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=True,
+        openWorldHint=True
+    ))
+    def unstack(branches: dict[str, list[str]], parent: str = "origin/main") -> str:
+        """Unstack linear commits into parallel branches for separate PRs.
+
+        This tool transforms a linear commit history (A -> B -> C -> D) into parallel
+        branches (A -> B, A -> C, A -> D) where each branch contains specific commits
+        cherry-picked from the original history.
+
+        Use this when you've made multiple changes in sequence but want to create
+        separate PRs for different logical changes. Each branch can be independently
+        reviewed and merged.
+
+        Example scenario:
+        You have commits: fix-bug -> add-feature -> update-docs
+        You want separate PRs, so you create:
+        - feat/999: [fix-bug, update-docs]
+        - feat/1000: [add-feature]
+
+        This creates two branches from origin/main:
+        - feat/999 with fix-bug and update-docs cherry-picked in order
+        - feat/1000 with add-feature cherry-picked
+
+        Args:
+            branches: Dictionary mapping branch names to lists of commit references.
+                     Commits can be specified as SHA, branch names, or symbolic refs (e.g., HEAD~2).
+                     Commits are cherry-picked in the order specified.
+            parent: Base commit to branch from (default: "origin/main").
+                   All branches will start from this commit.
+
+        Returns:
+            JSON string with format: {
+                created_branches: [{name, commits_applied, head_sha}],
+                errors: [{branch, commit, error}],
+                stats: {total_branches, successful_branches, failed_branches}
+            }
+
+        Note:
+            - Existing branches with the same name will cause an error
+            - The current branch is not changed by this operation
+            - Uses low-level git commands (commit-tree, update-ref) to avoid changing working directory
+        """
+        result = do_unstack(branches, parent)
+        return json.dumps(result, ensure_ascii=False, indent=2)
 
     return mcp
 
