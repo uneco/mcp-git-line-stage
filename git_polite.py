@@ -469,9 +469,9 @@ def apply_one_file(path: str, want_numbers: list[int]) -> dict:
     return {
         "applied": [{
             "file": path,
-            "applied_count": len(want_set),  # Number of lines applied in this operation
-            "remaining_count": unstaged_count,  # Number of lines remaining unstaged after this operation
-            "remaining_diff": file_info["lines"],  # The diff that remains unstaged after this apply operation
+            "applied_count": len(want_set),  # Number of diff changes (additions/deletions) applied in this operation
+            "remaining_count": unstaged_count,  # Number of diff changes still unstaged after this operation
+            "remaining_diff": file_info["lines"],  # The diff lines that remain unstaged after this apply operation
             # Legacy fields for backward compatibility
             "count": len(want_set),
             "lines": file_info["lines"],
@@ -915,8 +915,8 @@ def create_mcp_server():
             {
               applied: [{
                 file: string,
-                applied_count: number,      # Number of lines applied in this operation
-                remaining_count: number,    # Number of lines still unstaged after this operation
+                applied_count: number,      # Number of diff changes (additions/deletions) applied
+                remaining_count: number,    # Number of diff changes still unstaged
                 remaining_diff: string[],   # The diff that remains unstaged (NOT what was applied)
                 # Legacy fields (same data, kept for compatibility):
                 count: number,              # Same as applied_count
