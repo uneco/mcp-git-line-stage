@@ -415,6 +415,10 @@ def apply_one_file(path: str, want_numbers: list[int]) -> dict:
     Returns:
         Dictionary with keys:
         - applied: List of successfully applied changes with file info
+          Each entry contains:
+          - file: File path
+          - applied_count: Number of changes applied
+          - after_applying: Object with diff (numbered lines) and unstaged_lines count
         - skipped: List of skipped changes with reasons (binary, drift)
         - stats: Summary statistics (files, changes_applied, changes_skipped)
 
@@ -467,7 +471,14 @@ def apply_one_file(path: str, want_numbers: list[int]) -> dict:
     # Count remaining unstaged changes (lines that start with 4-digit number)
     unstaged_count = sum(1 for line in file_info["lines"] if line and len(line) >= 4 and line[:4].isdigit())
     return {
-        "applied": [{"file": path, "count": len(want_set), "lines": file_info["lines"], "unstaged_lines": unstaged_count}],
+        "applied": [{
+            "file": path,
+            "applied_count": len(want_set),
+            "after_applying": {
+                "diff": file_info["lines"],
+                "unstaged_lines": unstaged_count
+            }
+        }],
         "skipped": [],
         "stats": {"files": 1, "changes_applied": len(want_set), "changes_skipped": 0}
     }
@@ -654,15 +665,16 @@ def format_apply_pretty(result: dict) -> str:
     # Applied files
     for applied in result.get("applied", []):
         file_path = applied.get("file", "")
-        count = applied.get("count", 0)
-        unstaged = applied.get("unstaged_lines", 0)
+        applied_count = applied.get("applied_count", 0)
+        after_applying = applied.get("after_applying", {})
+        unstaged = after_applying.get("unstaged_lines", 0)
 
-        lines.append(f"{ANSI_GREEN}Applied {count} change(s) to {file_path}{ANSI_RESET}")
+        lines.append(f"{ANSI_GREEN}Applied {applied_count} change(s) to {file_path}{ANSI_RESET}")
         if unstaged > 0:
             lines.append(f"  {unstaged} unstaged change(s) remaining")
 
         # Show remaining diff
-        file_lines = applied.get("lines", [])
+        file_lines = after_applying.get("diff", [])
         if file_lines:
             lines.append("")
             lines.append(f"{ANSI_CYAN}{ANSI_BOLD}Remaining changes in {file_path}:{ANSI_RESET}")
@@ -1089,7 +1101,7 @@ def create_mcp_server():
             numbers: Change numbers in format: NNNN,MMMM,PPPP-QQQQ
 
         Returns:
-            JSON string with format: {applied: [{file, count, lines, unstaged_lines}], skipped, stats}
+            JSON string with format: {applied: [{file, applied_count, after_applying: {diff, unstaged_lines}}], skipped, stats}
         """
         try:
             nums = parse_number_tokens(numbers)

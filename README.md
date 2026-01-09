@@ -188,9 +188,11 @@ When a file shows `truncated: true`, use the `diff` tool to view its complete co
   "applied": [
     {
       "file": "src/main.py",
-      "count": 3,
-      "lines": ["remaining", "unstaged", "changes"],
-      "unstaged_lines": 5
+      "applied_count": 3,
+      "after_applying": {
+        "diff": ["0001: + remaining", "0002: - unstaged", "0003: + changes"],
+        "unstaged_lines": 5
+      }
     }
   ],
   "skipped": [],
