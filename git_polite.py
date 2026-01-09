@@ -464,6 +464,7 @@ def apply_one_file(path: str, want_numbers: list[int]) -> dict:
     update_index_with_content(path, mode, new_text)
 
     file_info = current_file_lines(path)
+    # Count lines starting with 4-digit numbers (e.g., "0001: + ...")
     unstaged_count = sum(1 for line in file_info["lines"] if line and len(line) >= 4 and line[:4].isdigit())
     return {
         "applied": [{
