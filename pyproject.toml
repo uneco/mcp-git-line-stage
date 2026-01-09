@@ -41,7 +41,7 @@ build-backend = "hatchling.build"
 packages = ["."]
 include = ["git_polite.py"]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=9.0.1",
 ]
